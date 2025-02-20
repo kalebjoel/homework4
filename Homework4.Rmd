@@ -1,0 +1,255 @@
+---
+title: "Homework 4"
+author: "Kaleb Luna | kl36927"
+date: "2025-02-20"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Github Link:
+
+<P style="page-break-before: always">
+
+\newpage
+
+# Problem 1: Iron Bank
+
+### Null Hypothesis
+
+The proportion of flagged trades from Iron Bank employees follows the SEC's baseline rate of 2.4%, t**he observed number of flagged trades is consistent with random variation under normal trading conditions.**
+
+### Test Statistic
+
+In this problem, I utilized **the number of flagged trades** out of 2021 as the test statistic.
+
+### Probability Distribution of the Number of Flagged Trades
+
+```{r echo = FALSE, warning = FALSE}
+library(ggplot2)
+totalTrades <- 2021
+probFlagged <- 0.024
+observedFlags <- 70
+numSimulations <- 10000
+
+simulatedFlags <- rbinom(numSimulations, totalTrades, probFlagged)
+pValue <- mean(simulatedFlags >= observedFlags)
+
+simulatedData <- data.frame(flaggedTrades = simulatedFlags)
+ggplot(simulatedData, aes(x=flaggedTrades)) + 
+  geom_histogram(binwidth =1, fill = "maroon", color = "black", alpha = 0.7) + 
+  geom_vline(xintercept = observedFlags, color = "blue", linetype = "dashed", size = 1.2 ) + 
+  labs(title = "Montle Carlo Simulation: Flagged Trades Distribution", 
+       subtitle = paste("Observed Flagged Trades =", observedFlags, "| p-value =", round(pValue, 4)),
+       x = "Number of Flagged Trades",
+       y = "Frequency") +
+  theme_minimal() 
+
+```
+
+### P-value
+
+The p-value of the simulation is **0.0016.**
+
+### Conclusion
+
+Because the p-value is extremely small, the evidence suggests that the observed 70 flagged trades out of 2021 are not at the same 2.4% baseline rate as that of other traders, also which may suggest that there may be suspicious trading practices behind the scenes.
+
+<P style="page-break-before: always">
+
+\newpage
+
+# Problem 2: Health Inspections
+
+### Null Hypothesis
+
+In this problem, the null hypothesis of interest pertains to the question of **if the proportion of health code violations for Gourmet Bites is the same as the citywide baseline rate of 3%**
+
+### Test Statistic
+
+The test statistic of interest is the number of health code violations out of 50 inspections.
+
+### Probability Distribution of the Number of Health Code Violations out of 50 Inspections
+
+```{r echo = FALSE, warning = FALSE}
+numInspections <- 50
+probViolation <- 0.03
+observedViolations <- 8
+numSimulations <- 10000
+
+simulatedViolations <- rbinom(numSimulations, numInspections, probViolation)
+pValue <- mean(simulatedViolations >= observedViolations)
+simulatedData <- data.frame(Violations = simulatedViolations)
+
+ggplot(simulatedData, aes(x = Violations)) +
+  geom_histogram(binwidth = 1, fill = "maroon", color = "black", alpha = 0.7) +
+  geom_vline(xintercept = observedViolations, color = "blue", linetype = "dashed", size = 1.2) +
+  labs(title = "Distribution of Health Code Violations with Monte Carlo Simulation", 
+       subtitle = paste("Observed Violations =", observedViolations, "| P-value = ", round(pValue, 2)),
+       x = "Number of Violations",
+       y = "Frequency"
+       ) +
+  theme_minimal() 
+```
+
+### P-value
+
+The p-value, aka the probability of observing 8 or more violations given the null hypothesis is **0.**
+
+### Conclusion
+
+With a calculated p-value of 0, indicating a extremely small value, it can be concluded that the 8 violations in the 50 inspections are unlikely to occur in a normal case, suggesting that Gourmet Bites rate of health code violations are unusually higher.
+
+<P style="page-break-before: always">
+
+\newpage
+
+# Problem 3: Evaluating Jury Selection for Bias
+
+### Step 1: Hypotheses
+
+-   Null Hypothesis: Are the distribution of empaneled jurors the same as the epxected distribution according to the county's eligible jury pool.
+
+-   Alternative Hypothesis: The distribution of empaneled jurors are not the same from the county's population proportions.
+
+### Step 2: Test Statistic
+
+The appropriate test for this problem is **the Chi-square Goodness-of-Fit test** for the comparison between the observed and expected counts of the jury distributions.
+
+### Step 3: Compute Expected Counts
+
+The total number of empaneled jurors across 20 trials: 20 x 12 = 240 jurors
+
+-   Group 1: 30% \* (240) = 72
+
+-   Group 2: 25% \* (240) = 60
+
+-   Group 3: 20% \* (240) = 48
+
+-   Group 4: 15% \* (48) = 36
+
+-   Group 5: 10% \* (240) = 24
+
+#### Step 4: Computing the Test Statistic using Chi-Square Goodness of Fit Test
+
+```{r echo = FALSE}
+observedCounts <- c(85, 56, 59, 27, 13)
+expectedCount <- c(72,60,48,36,24)
+
+print(chisq.test(observedCounts, p = expectedCount / sum(expectedCount)))
+
+```
+
+### Step 5: P-value
+
+The calcuated p-value is 0.0146, which is less than 0.05; therefore, we reject the null hypothesis stated previously, suggesting that the jury selection process does not match with the expected demographic proportions.
+
+### Conclusion
+
+Overall, this does suggest systematic bias in the jury selection. To investigate further, it may be useful to compare jury selections with other different judges in one county or obtain insight from potential jurors regarding their experiences.
+
+<P style="page-break-before: always">
+
+\newpage
+
+# Problem 4: LLM watermarking
+
+```{r echo = FALSE, message = FALSE, warning = FALSE}
+library(ggplot2)
+library(dplyr)
+library(stringr)
+
+```
+
+## Part A
+
+```{r echo = FALSE, message = FALSE, warning = FALSE}
+brownSentences <- readLines("brown_sentences.txt")
+letterFreqs <- read.csv("letter_frequencies.csv")
+
+processText <- function(text) {
+  text <- toupper(text)
+  text <- gsub("[^A-Z]", "", text)
+  return(text)
+}
+
+processedSentences <- sapply(sentences, processText)
+
+countLetters <- function(text){
+  table(strsplit(text,NULL))
+}
+
+letterCounts <- lapply(processedSentences, countLetters)
+
+letterFreqs <- setNames(letterFreqs$Probability, letterFreqs$Letter)
+
+computeTest <- function(letterCount) {
+  totalLetters <- sum(letterCount)
+  observed <- rep(0, 26) 
+  names(observed) <- LETTERS
+  observed[names(letterCount)] <- letterCount
+  expected <- totalLetters * letterFreqs 
+  chisqStat <- sum((observed-expected)^2 / expected)
+  return(chisqStat)
+}
+
+chiSquareValues <- sapply(letterCounts, computeTest)
+chiSquareddf <- data.frame(chiSquared = chiSquareValues)
+
+ggplot(chiSquareddf, aes(x =chiSquared)) +
+  geom_histogram(binwidth = 5, fill = "maroon", alpha = 0.6, color = "black") +
+  ggtitle("Chi-Squared Distribution of Normal Sentencs") +
+  xlab("Chi-Squared Value") + ylab("Frequency") + 
+  theme_minimal() 
+```
+
+<P style="page-break-before: always">
+
+\newpage
+
+## Part B
+
+```{r echo = FALSE}
+library(knitr)
+testSentences <- c("She opened the book and started to read the first chapter, eagerly anticipating what might come next.",
+               "Despite the heavy rain, they decided to go for a long walk in the park, crossing the main avenue by the fountain in the center.",
+               "The museum’s new exhibit features ancient artifacts from various civilizations around the world",
+               "He carefully examined the document, looking for any clues that might help solve the mystery.",
+               "The students gathered in the auditorium to listen to the guest speaker’s inspiring lecture",
+               "Feeling vexed after an arduous and zany day at work, she hoped for a peaceful and quiet evening
+at home, cozying up after a quick dinner with some TV, or maybe a book on her upcoming visit to
+Auckland",
+               ". The chef demonstrated how to prepare a delicious meal using only locally sourced ingredients, focusing
+mainly on some excellent dinner recipes from Spain.",
+               "They watched the sunset from the hilltop, marveling at the beautiful array of colors in the sky.",
+               "The committee reviewed the proposal and provided many points of useful feedback to improve the
+project’s effectiveness.",
+               "Despite the challenges faced during the project, the team worked tirelessly to ensure its successful
+completion, resulting in a product that exceeded everyone’s expectations."
+               )
+
+processedTestSentences <- sapply(testSentences, processText)
+testLetterCounts <- lapply(processedTestSentences, countLetters)
+testChiSquared <- sapply(testLetterCounts, computeTest)
+
+pValues <- pchisq(testChiSquared, df = 25, lower.tail = FALSE)
+testResults <- data.frame(Sentence = 1:10, 
+                         chiSquared = testChiSquared, 
+                          PValue = round(pValues, 3))
+print(testResults)
+
+
+testResults$Label <- ifelse(testResults$PValue < 0.05, "Suspicious (Potential LM)", "Normal")
+
+ggplot() +
+  geom_histogram(data = chiSquareddf, aes(x=chiSquared), binwidth = 5, fill = "maroon", alpha = 0.6, color = "black") + 
+  geom_vline(data = testResults, aes(xintercept = chiSquared, color = Label), linetype = "dashed", size = 1) + 
+  ggtitle("Chi-Squared Test for Watermark Detection") +
+  xlab("Chi-Squared Value") + ylab("Frequency") +
+  theme_minimal() +
+  scale_color_manual(values = c("red", "green"))
+
+
+```
